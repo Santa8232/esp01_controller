@@ -117,10 +117,11 @@ curl http://192.168.29.123/text
 | Gesture | Action | Description |
 | :--- | :--- | :--- |
 | **Tap (<220ms)** | DOT (`.`) | Added immediately on button release. |
-| **Hold (≥220ms)** | DASH (`-`) | Triggered while holding down. |
+| **Hold (220ms – 799ms)** | DASH (`-`) | Triggered while holding down. |
+| **Hold (≥800ms)** | `SPACE` | Press & hold for 0.8s when idle to immediately emit a space! |
 | **Inactivity Pause (500ms)** | DECODE | Decodes buffered sequence and types the letter. |
-| **Hold (≥1.5s)** | CANCEL | Clears mistaken sequence without typing. |
-| **Space Sequence** | `..--` or `.-.-` | Decodes as `SPACE` character. |
+| **Super Long Hold (≥1.8s)** | CANCEL | Clears mistaken sequence without typing. |
+| **Morse Space Sequence** | `..--` or `.-.-` | Explicitly decodes as `SPACE` character. |
 
 ---
 

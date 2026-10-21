@@ -27,11 +27,13 @@ const unsigned long COPY_LONG_PRESS_MS = 500;
 unsigned long morseDashMs = 220;     // Click threshold: < 220ms = dot, >= 220ms = dash
 unsigned long morseGapMs = 500;      // Inactivity pause to decode letter: 500ms (was 900ms)
 unsigned long wordGapMs = 1200;      // Inactivity pause to emit SPACE: 1200ms (was 2200ms)
-const unsigned long MORSE_CANCEL_MS = 1500; // Hold 1.5s to cancel/clear mistake sequence
+const unsigned long MORSE_SPACE_HOLD_MS = 800;  // Hold 800ms = emit SPACE gesture!
+const unsigned long MORSE_CANCEL_MS = 1800;     // Hold 1.8s = cancel/clear mistake sequence
 
 bool rawLast = HIGH;
 bool stableButton = HIGH;
 bool longPressSent = false;
+bool spaceSent = false;
 bool clearSent = false;
 unsigned long debounceAt = 0;
 unsigned long pressAt = 0;
@@ -154,6 +156,7 @@ void handleButton() {
     if (stableButton == LOW) {
       pressAt = millis();
       longPressSent = false;
+      spaceSent = false;
       clearSent = false;
     } else {
       // Key Released (Key Up)
@@ -164,12 +167,15 @@ void handleButton() {
           enqueueEvent("COPY");
         }
       } else {
-        // Morse mode: if not already triggered as dash or cleared, record DOT
-        if (!longPressSent && !clearSent) {
+        // Morse mode: if not already triggered as dash, space, or cleared, record DOT
+        if (!longPressSent && !clearSent && !spaceSent) {
           if (morseLen < sizeof(morse) - 1) {
             morse[morseLen++] = '.';
             morse[morseLen] = '\0';
           }
+        }
+        // Inactivity gap timer starts on key release for all dots and dashes!
+        if (!clearSent && !spaceSent) {
           lastMorseInput = millis();
           lastSequence = morse;
         }
@@ -187,17 +193,27 @@ void handleButton() {
         enqueueEvent("WIN_V");
       }
     } else {
-      // Morse mode: trigger DASH as soon as heldDuration reaches morseDashMs
+      // Morse mode:
       if (!longPressSent && heldDuration >= morseDashMs) {
+        // 1. Reached dash threshold (220ms): tentatively record '-'
         longPressSent = true;
         if (morseLen < sizeof(morse) - 1) {
           morse[morseLen++] = '-';
           morse[morseLen] = '\0';
         }
-        lastMorseInput = millis();
         lastSequence = morse;
+      } else if (!spaceSent && !clearSent && heldDuration >= MORSE_SPACE_HOLD_MS && heldDuration < MORSE_CANCEL_MS) {
+        // 2. Continuous hold (800ms) from idle: emit SPACE directly!
+        if (morseLen == 1 && morse[0] == '-') {
+          spaceSent = true;
+          morseLen = 0;
+          morse[0] = '\0';
+          enqueueEvent("SPACE");
+          lastSequence = "[SPACE]";
+          lastCharacter = "[SPACE]";
+        }
       } else if (!clearSent && heldDuration >= MORSE_CANCEL_MS) {
-        // Super long hold: clear accidental mistake sequence
+        // 3. Super long hold (1.8s): clear accidental mistake sequence
         clearSent = true;
         morseLen = 0;
         morse[0] = '\0';
