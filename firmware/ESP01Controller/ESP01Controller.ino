@@ -590,9 +590,10 @@ main{max-width:520px;margin:0 auto}
       <line id="e_W_P" class="pad-edge" x1="275" y1="400" x2="330" y2="400"/>
       <line id="e_W_J" class="pad-edge" x1="275" y1="400" x2="275" y2="465"/>
 
-      <!-- Drop from I to U, F -->
+      <!-- Drop from I to U, F, SPACE -->
       <line id="e_I_U" class="pad-edge" x1="330" y1="78" x2="330" y2="150"/>
       <line id="e_U_F" class="pad-edge" x1="330" y1="150" x2="330" y2="220"/>
+      <line id="e_F_SP" class="pad-edge" x1="330" y1="220" x2="373" y2="220"/>
 
       <!-- Drop from S to V -->
       <line id="e_S_V" class="pad-edge" x1="385" y1="78" x2="385" y2="150"/>
@@ -636,12 +637,16 @@ main{max-width:520px;margin:0 auto}
       <rect id="n_V" class="pad-node-dash" x="379" y="138" width="12" height="24" rx="4"/>
       <text id="l_V" class="pad-label" x="403" y="154">V</text>
 
-      <!-- ROW 3: Z (left) | F (right) -->
+      <!-- ROW 3: Z (left) | F, SPACE (right) -->
       <circle id="n_Z" class="pad-node-dot" cx="130" cy="220" r="8"/>
       <text id="l_Z" class="pad-label" x="146" y="224">Z</text>
 
       <circle id="n_F" class="pad-node-dot" cx="330" cy="220" r="8"/>
       <text id="l_F" class="pad-label" x="346" y="224">F</text>
+
+      <!-- SPACE Node (..--) -->
+      <rect id="n_SP" class="pad-node-dash" x="373" y="214" width="24" height="12" rx="4"/>
+      <text id="l_SP" class="pad-label" x="404" y="224">SPACE</text>
 
       <!-- ROW 4: Y, K, N (left) | A, R, L (right) -->
       <rect id="n_Y" class="pad-node-dash" x="53" y="254" width="24" height="12" rx="4"/>
@@ -694,10 +699,16 @@ main{max-width:520px;margin:0 auto}
       <div class="pad-legend-row">
         <span class="legend-pill"><span class="pill-dot"></span> TAP = DOT (·)</span>
         <span class="legend-pill"><span class="pill-dash"></span> HOLD = DASH (—)</span>
+        <span class="legend-pill" style="cursor:pointer" onclick="sendSpace()" title="Click to send SPACE"><span class="pill-dash" style="background:#38bdf8;box-shadow:0 0 9px #38bdf8"></span> ␣ SPACE (..-- )</span>
       </div>
-      <button class="thumb-pad-btn" id="thumbKeyPad" type="button">
-        PRESS &amp; HOLD THUMB KEY PAD
-      </button>
+      <div style="display:flex;gap:8px">
+        <button class="thumb-pad-btn" id="thumbKeyPad" type="button" style="flex:1">
+          PRESS &amp; HOLD THUMB KEY PAD
+        </button>
+        <button class="btn-mini" type="button" style="padding:10px 16px;border-radius:10px;font-size:12px;font-weight:800;letter-spacing:1px;border-color:#38bdf8;color:#38bdf8" onclick="sendSpace()">
+          ␣ SPACE
+        </button>
+      </div>
     </div>
   </div>
 
@@ -884,7 +895,8 @@ const morseAlphabet = {
   'C': { code: '-.-.', type: 'dot', node: 'n_C', label: 'l_C', x: 130, y: 340, edges: ['e_root', 'e_ant_T', 'e_T_N', 'e_N_K', 'e_K_C'] },
   'D': { code: '-..', type: 'dot', node: 'n_D', label: 'l_D', x: 190, y: 400, edges: ['e_root', 'e_ant_T', 'e_T_N', 'e_N_D'] },
   'X': { code: '-..-', type: 'dash', node: 'n_X', label: 'l_X', x: 125, y: 400, edges: ['e_root', 'e_ant_T', 'e_T_N', 'e_N_D', 'e_D_X'] },
-  'B': { code: '-...', type: 'dot', node: 'n_B', label: 'l_B', x: 190, y: 465, edges: ['e_root', 'e_ant_T', 'e_T_N', 'e_N_D', 'e_D_B'] }
+  'B': { code: '-...', type: 'dot', node: 'n_B', label: 'l_B', x: 190, y: 465, edges: ['e_root', 'e_ant_T', 'e_T_N', 'e_N_D', 'e_D_B'] },
+  'SP': { code: '..--', type: 'dash', node: 'n_SP', label: 'l_SP', x: 385, y: 220, edges: ['e_root', 'e_ant_E', 'e_E_I', 'e_I_U', 'e_U_F', 'e_F_SP'] }
 };
 
 // Map code to letter
@@ -892,6 +904,7 @@ const codeMap = {};
 Object.entries(morseAlphabet).forEach(([letter, data]) => {
   codeMap[data.code] = letter;
 });
+codeMap['.-.-'] = 'SP';
 
 function resetPad(){
   document.querySelectorAll('.pad-edge').forEach(e => e.classList.remove('active'));
@@ -937,9 +950,24 @@ function highlightPath(code){
       ret.setAttribute('cy', target.y);
       ret.style.display = 'block';
     }
-    document.querySelector('#liveLetterBadge').textContent = `Active: ${finalLetter} [${code}]`;
+    const displayName = finalLetter === 'SP' ? 'SPACE' : finalLetter;
+    document.querySelector('#liveLetterBadge').textContent = `Active: ${displayName} [${code}]`;
   } else {
     document.querySelector('#liveLetterBadge').textContent = `Sequence: [${code}]`;
+  }
+}
+
+async function sendSpace(){
+  highlightPath('..--');
+  playMorseAudio('..--');
+  try{
+    await fetch('/space');
+  }catch(e){}
+  streamText += ' ';
+  const box = document.querySelector('#streamBox');
+  if (box){
+    box.textContent = streamText || 'Waiting for input...';
+    box.scrollTop = box.scrollHeight;
   }
 }
 
@@ -950,6 +978,9 @@ Object.entries(morseAlphabet).forEach(([ch, item]) => {
   function handleSelect(){
     highlightPath(item.code);
     playMorseAudio(item.code);
+    if (ch === 'SP'){
+      sendSpace();
+    }
   }
   if (nodeEl) nodeEl.addEventListener('click', handleSelect);
   if (labelEl) labelEl.addEventListener('click', handleSelect);
@@ -979,6 +1010,7 @@ async function pollPractice(){
         const box = document.querySelector('#streamBox');
         if (d.character === '[SPACE]'){
           streamText += ' ';
+          highlightPath('..--');
           playBeep(500, 0.06);
         } else if (d.character === '[CLEARED]'){
           resetPad();
@@ -1135,6 +1167,13 @@ void setup() {
     json += jsonEscape(lastCharacter);
     json += "\"}";
     server.send(200, "application/json", json);
+  });
+
+  server.on("/space", HTTP_GET, []() {
+    enqueueEvent("SPACE");
+    lastSequence = "[SPACE]";
+    lastCharacter = "[SPACE]";
+    server.send(200, "application/json", "{\"status\":\"ok\"}");
   });
 
   server.begin();
