@@ -24,11 +24,11 @@ String lastCharacter = "";
 
 const unsigned long DEBOUNCE_MS = 25;
 const unsigned long COPY_LONG_PRESS_MS = 500;
-unsigned long morseDashMs = 220;     // Click threshold: < 220ms = dot, >= 220ms = dash
-unsigned long morseGapMs = 500;      // Inactivity pause to decode letter: 500ms (was 900ms)
-unsigned long wordGapMs = 1200;      // Inactivity pause to emit SPACE: 1200ms (was 2200ms)
-const unsigned long MORSE_SPACE_HOLD_MS = 800;  // Hold 800ms = emit SPACE gesture!
-const unsigned long MORSE_CANCEL_MS = 1800;     // Hold 1.8s = cancel/clear mistake sequence
+unsigned long morseDashMs = 200;     // Click threshold: < 200ms = dot, >= 200ms = dash
+unsigned long morseGapMs = 750;      // Inactivity pause to decode letter: 750ms (allows comfortable multi-element Morse)
+unsigned long wordGapMs = 1200;      // Inactivity pause to emit SPACE: 1200ms
+const unsigned long MORSE_SPACE_HOLD_MS = 750;  // Direct hold (750ms) = emit SPACE gesture!
+const unsigned long MORSE_CANCEL_MS = 1800;     // Long hold (1.8s) = cancel/clear sequence
 
 bool rawLast = HIGH;
 bool stableButton = HIGH;
@@ -103,7 +103,10 @@ void loadSettings() {
   uint8_t d = EEPROM.read(101);
   if (d >= 10 && d <= 80) morseDashMs = (unsigned long)d * 10;
   uint8_t g = EEPROM.read(102);
-  if (g >= 20 && g <= 150) morseGapMs = (unsigned long)g * 10;
+  if (g >= 20 && g <= 150) {
+    morseGapMs = (unsigned long)g * 10;
+    if (morseGapMs < 600) morseGapMs = 750; // Auto-migrate from old 500ms timeout to 750ms
+  }
   uint8_t w = EEPROM.read(103);
   if (w >= 30 && w <= 150) wordGapMs = (unsigned long)w * 20;
 
@@ -137,7 +140,7 @@ char decodeMorse(const char* code) {
   if (strcmp(code, ".-..-.") == 0) return '"';
   if (strcmp(code, ".--.-.") == 0) return '@';
   if (strcmp(code, "-..-.") == 0) return '/';
-  if (strcmp(code, "..--") == 0 || strcmp(code, ".-.-") == 0) return ' '; // explicit Morse SPACE codes
+  if (strcmp(code, "..--") == 0 || strcmp(code, ".-.-") == 0 || strcmp(code, "....-") == 0) return ' '; // explicit Morse SPACE codes
   return '\0';
 }
 
@@ -747,18 +750,18 @@ main{max-width:520px;margin:0 auto}
       <span class="stream-title">Morse Speed &amp; Thresholds</span>
     </div>
     <div class="presets-row">
-      <button class="chip" type="button" onclick="setWpm(260,600)">🐢 Relaxed</button>
-      <button class="chip" type="button" onclick="setWpm(220,500)">⚡ Normal</button>
-      <button class="chip" type="button" onclick="setWpm(160,380)">🚀 Fast</button>
+      <button class="chip" type="button" onclick="setWpm(240,850)">🐢 Relaxed</button>
+      <button class="chip" type="button" onclick="setWpm(200,750)">⚡ Normal</button>
+      <button class="chip" type="button" onclick="setWpm(160,500)">🚀 Fast</button>
     </div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr">
       <div>
         <label class="form-label">Dash Threshold (ms)</label>
-        <input class="form-input" type="number" id="dashInput" min="100" max="800" value="220">
+        <input class="form-input" type="number" id="dashInput" min="100" max="800" value="200">
       </div>
       <div>
         <label class="form-label">Letter Pause (ms)</label>
-        <input class="form-input" type="number" id="gapInput" min="200" max="1500" value="500">
+        <input class="form-input" type="number" id="gapInput" min="200" max="1500" value="750">
       </div>
     </div>
     <button class="btn-save" type="button" onclick="saveSettings()">Save Configuration</button>

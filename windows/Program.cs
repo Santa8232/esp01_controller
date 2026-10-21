@@ -69,8 +69,8 @@ internal static class Program
                     break;
 
                 case "SPACE":
-                    TypeUnicode(" ");
-                    Console.WriteLine("[Keyboard] Typed: [SPACE]");
+                    PressSpace();
+                    Console.WriteLine("[Keyboard] Pressed: [SPACE]");
                     break;
 
                 default:
@@ -79,8 +79,16 @@ internal static class Program
                         string value = eventName[5..];
                         if (value.Length > 0)
                         {
-                            TypeUnicode(value);
-                            Console.WriteLine(value == " " ? "[Keyboard] Typed: [SPACE]" : $"[Keyboard] Typed: '{value}'");
+                            if (value == " ")
+                            {
+                                PressSpace();
+                                Console.WriteLine("[Keyboard] Pressed: [SPACE]");
+                            }
+                            else
+                            {
+                                TypeUnicode(value);
+                                Console.WriteLine($"[Keyboard] Typed: '{value}'");
+                            }
                         }
                     }
                     else
@@ -154,6 +162,14 @@ internal static class Program
         SendKey(VK_LWIN, false);
 
         Console.WriteLine("[Keyboard] Dispatched Win+V (Clipboard History).");
+    }
+
+    private static void PressSpace()
+    {
+        const ushort VK_SPACE = 0x20;
+        SendKey(VK_SPACE, true);
+        Thread.Sleep(15);
+        SendKey(VK_SPACE, false);
     }
 
     private static void SendKey(ushort key, bool down)

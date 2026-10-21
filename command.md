@@ -116,12 +116,12 @@ curl http://192.168.29.123/text
 ### Morse Code Mode (`mode=morse`)
 | Gesture | Action | Description |
 | :--- | :--- | :--- |
-| **Tap (<220ms)** | DOT (`.`) | Added immediately on button release. |
-| **Hold (220ms – 799ms)** | DASH (`-`) | Triggered while holding down. |
-| **Hold (≥800ms)** | `SPACE` | Press & hold for 0.8s when idle to immediately emit a space! |
-| **Inactivity Pause (500ms)** | DECODE | Decodes buffered sequence and types the letter. |
+| **Tap (<200ms)** | DOT (`.`) | Added immediately on button release. |
+| **Hold (200ms – 749ms)** | DASH (`-`) | Triggered while holding down. |
+| **Hold (≥750ms)** | `SPACE` | Press & hold for 0.75s when idle to immediately emit a space! |
+| **Inactivity Pause (750ms)** | DECODE | Decodes buffered sequence and types the letter (comfortable multi-element timing). |
 | **Super Long Hold (≥1.8s)** | CANCEL | Clears mistaken sequence without typing. |
-| **Morse Space Sequence** | `..--` or `.-.-` | Explicitly decodes as `SPACE` character. |
+| **Morse Space Sequence** | `..--`, `.-.-`, `....-` | Explicitly decodes as `SPACE` character. |
 
 ---
 
