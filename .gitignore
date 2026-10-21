@@ -1,0 +1,25 @@
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+
+# Arduino / ESP8266 build artifacts
+build/
+*.bin
+*.elf
+*.o
+*.a
+
+# IDE & Editor folders
+.vs/
+.vscode/
+.idea/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.log
+scratch/
